@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>柱形图</title>
+    <script src="https://cdn.bootcss.com/d3/5.15.0/d3.min.js"></script>
+</head>
+<body>
+    <div class="bar-container"></div>
+    <button onclick="mysort()">排序</button>
+    <button onclick="myadd()">新增</button>
+</body>
+<script>
+    const dataset = [50, 43, 120, 87, 99, 167, 142]
+    const width = 400
+    const height = 400
+    const svg = d3.select('.bar-container')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height)
+    const padding = { top: 20, right: 20, bottom: 20, left: 20 }
+    const rectStep = 35
+    const rectWidth = 30
+
+    function initRect(svgDom) {
+        if (svgDom) {
+            svgDom.attr('fill', 'steelblue')
+                .attr('x', (d, i) => {
+                    return padding.left + i * rectStep
+                })
+                .attr('y', (d) => {
+                    return height - padding.bottom - d
+                })
+                .attr('width', rectWidth)
+                .attr('height', (d) => {
+                    return d
+                })
+        }
+    }
+    function initText(svgDom) {
+        if (svgDom) {
+            svgDom.attr('fill', '#000')
+                .attr('font-size', '14px')
+                .attr('text-anchor', 'middle')
+                .attr('x', (d, i) => padding.left + i * rectStep)
+                .attr('y', (d) => height - padding.bottom - d)
+                .attr('dx', rectWidth/2)
+                .attr('dy', '-0.5em')
+                .text(d => d)
+        }
+    }
+    function draw() {
+        const updateRect = svg.selectAll('rect')
+            .data(dataset)
+        const enterRect = updateRect.enter()
+        const exitRect = updateRect.exit()
+
+        initRect(updateRect)
+        
+        initRect(enterRect.append('rect'))
+
+        exitRect.remove()
+
+        const updateText = svg.selectAll('text')
+            .data(dataset)
+        const enterText = updateText.enter()
+        const exitText = updateText.exit()
+
+        initText(updateText)
+        
+        initText(enterText.append('text'))
+
+        exitText.remove()
+    }
+    function mysort() {
+        dataset.sort(d3.ascending)
+        draw()
+    }
+    function myadd() {
+        dataset.push(Math.floor(Math.random() * 100))
+        draw()
+    }
+    draw()
+</script>
+</html>
