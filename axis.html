@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>坐标轴</title>
+    <style>
+        .axis-container path, .axis-container line{
+            fill: none;
+            stroke: black;
+            shape-rendering: crispEdges;
+        }
+        .axis-container text {
+            font-size: 11px;
+        }
+    </style>
+    <script src="https://cdn.bootcss.com/d3/5.15.0/d3.min.js"></script>
+</head>
+<body>
+    <div class="axis-container"></div>
+</body>
+<script>
+    const dataset = [50, 43, 120, 87, 99, 167, 142]
+    const width = 600
+    const height = 600
+    const svg = d3.select('.axis-container')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height)
+
+    const xScale = d3.scaleLinear()
+        .domain([0, 10])
+        .range([0, 300])
+    
+    const axis = d3.axisBottom()
+        .scale(xScale)
+
+    const gAxis = svg.append('g')
+        .attr('transform', 'translate(80, 80)')
+
+    const gAxisLeft = gAxis.clone()
+
+    const gAxisRight = gAxis.clone()
+
+    const gAxisTop = gAxis.clone()
+
+    const gAxisTopPow = gAxis.clone()
+
+    const gAxisTopLog = gAxis.clone()
+
+    gAxis.call(axis)
+    
+    const axisLeft = d3.axisLeft()
+        .scale(xScale)
+        .ticks(5)
+
+    const axisRight = d3.axisRight()
+        .scale(xScale)
+        .tickValues([3,4,5,6,7])
+
+    gAxisLeft.call(axisLeft)
+
+    gAxisLeft.attr('transform', 'translate(80,100)')
+
+    gAxisRight.call(axisRight)
+
+    gAxisRight.attr('transform', 'translate(90,100)')
+
+    const axisTop = d3.axisTop()
+        .scale(xScale)
+        .ticks(5)
+        .tickSize(2,4)
+        .tickFormat(d3.format('$0.2f'))
+    gAxisTop.call(axisTop)
+
+    gAxisTop.attr('transform', 'translate(80,60)')
+
+    const pow = d3.scalePow()
+        .exponent(2)
+        .domain([0,1])
+        .range([0,500])
+    const log = d3.scaleLog()
+        .domain([0.01, 1])
+        .range([0, 500])
+
+    const axisTopPow = d3.axisTop()
+        .scale(pow)
+
+    gAxisTopPow.call(axisTopPow)
+    gAxisTopPow.attr('transform', 'translate(80,40)')
+
+    const axisTopLog = d3.axisTop()
+        .scale(log)
+
+    gAxisTopLog.call(axisTopLog)
+    gAxisTopLog.attr('transform', 'translate(80,20)')
+    
+</script>
+</html>

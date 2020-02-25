@@ -19,23 +19,29 @@
         .append('svg')
         .attr('width', width)
         .attr('height', height)
-    const padding = { top: 20, right: 20, bottom: 20, left: 20 }
+    const padding = { top: 20, right: 20, bottom: 20, left: 30 }
     const rectStep = 35
     const rectWidth = 30
-
+    let xScale = d3.scaleBand().rangeRound([0,width]).padding(0.2).paddingOuter(0.8)
+    let yScale = d3.scaleLinear().range([0,height-padding.bottom])
+    function initScale() {
+        xScale.domain(d3.range(dataset.length))
+        yScale.domain([0, d3.max(dataset)]).range([0,height-padding.bottom])
+    }
     function initRect(svgDom) {
         if (svgDom) {
             svgDom.attr('fill', 'steelblue')
                 .attr('x', (d, i) => {
-                    return padding.left + i * rectStep
+                    return padding.left + xScale(i)
                 })
                 .attr('y', (d) => {
-                    return height - padding.bottom - d
+                    return height - padding.bottom - yScale(d)
                 })
-                .attr('width', rectWidth)
+                .attr('width', xScale.bandwidth())
                 .attr('height', (d) => {
-                    return d
+                    return yScale(d)
                 })
+                .attr('class', 'rect')
         }
     }
     function initText(svgDom) {
@@ -43,15 +49,17 @@
             svgDom.attr('fill', '#000')
                 .attr('font-size', '14px')
                 .attr('text-anchor', 'middle')
-                .attr('x', (d, i) => padding.left + i * rectStep)
-                .attr('y', (d) => height - padding.bottom - d)
-                .attr('dx', rectWidth/2)
-                .attr('dy', '-0.5em')
+                .attr('x', (d, i) => padding.left + xScale(i))
+                .attr('y', (d) => height - padding.bottom - yScale(d))
+                .attr('dx', xScale.bandwidth()/2)
+                .attr('dy', '1em')
                 .text(d => d)
+                .attr('class', 'text')
         }
     }
     function draw() {
-        const updateRect = svg.selectAll('rect')
+        initScale()
+        const updateRect = svg.selectAll('.rect')
             .data(dataset)
         const enterRect = updateRect.enter()
         const exitRect = updateRect.exit()
@@ -62,7 +70,7 @@
 
         exitRect.remove()
 
-        const updateText = svg.selectAll('text')
+        const updateText = svg.selectAll('.text')
             .data(dataset)
         const enterText = updateText.enter()
         const exitText = updateText.exit()
@@ -72,6 +80,27 @@
         initText(enterText.append('text'))
 
         exitText.remove()
+        drowAxis()
+    }
+    let xAxis
+    let gXaxis = svg.append('g')
+    let yAxis
+    let gYaxis = svg.append('g')
+    function drowAxis() {
+        gXaxis.remove()
+        xAxis = d3.axisBottom()
+        gXaxis = svg.append('g')
+        xAxis = xAxis.scale(xScale)
+        gXaxis.call(xAxis)
+            .attr('transform', `translate(${padding.left}, ${height - padding.bottom})`)
+
+        gYaxis.remove()
+        yAxis = d3.axisLeft()
+        gYaxis = svg.append('g')
+        yScale.range([height-padding.bottom, 0])
+        yAxis.scale(yScale)
+        gYaxis.call(yAxis)
+            .attr('transform', `translate(${padding.left}, 0)`)
     }
     function mysort() {
         dataset.sort(d3.ascending)
