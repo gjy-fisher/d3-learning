@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>散点图</title>
+    <script src="https://cdn.bootcss.com/d3/5.15.0/d3.min.js"></script>
+</head>
+<body>
+    <div class="scatter-container"></div>
+    <button onclick="myadd()">新增</button>
+</body>
+<script>
+    const dataset = [[0.5,0.5], [0.7,0.8], [0.4,0.9], [0.11, 0.32], [0.88, 0.25], [0.75, 0.12], [0.5, 0.1], [0.2, 0.3], [0.4, 0.1], [0.6, 0.7]]
+    const width = 400
+    const height = 400
+    const svg = d3.select('.scatter-container')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height)
+    const padding = { top: 20, right: 20, bottom: 20, left: 30 }
+
+    let xScale = d3.scaleLinear().domain([0, 1.2 * d3.max(dataset, (d) => d[0])]).range([0, width])
+    let yScale = d3.scaleLinear().domain([0, 1.2 * d3.max(dataset, (d) => d[1])]).range([0, height-padding.bottom])
+
+    function initCircle(svgDom) {
+        if (svgDom) {
+            svgDom.attr('fill', 'black')
+                .attr('cx', (d) => {
+                    return padding.left + xScale(d[0])
+                })
+                .attr('cy', (d) => {
+                    return height - padding.bottom - yScale(d[1])
+                })
+                .attr('r', 5)
+                .attr('class', 'circle')
+        }
+    }
+    function draw() {
+        const updateCircle = svg.selectAll('.circle')
+            .data(dataset)
+        const enterCircle = updateCircle.enter()
+        const exitCircle = updateCircle.exit()
+
+        initCircle(updateCircle)
+        
+        initCircle(enterCircle.append('circle'))
+
+        exitCircle.remove()
+
+        drowAxis()
+    }
+    let xAxis
+    let gXaxis = svg.append('g')
+    let yAxis
+    let gYaxis = svg.append('g')
+    function drowAxis() {
+        gXaxis.remove()
+        xAxis = d3.axisBottom()
+        gXaxis = svg.append('g')
+        xAxis = xAxis.scale(xScale)
+        gXaxis.call(xAxis)
+            .attr('transform', `translate(${padding.left}, ${height - padding.bottom})`)
+
+        gYaxis.remove()
+        yAxis = d3.axisLeft()
+        gYaxis = svg.append('g')
+        yScale.range([height-padding.bottom, 0])
+        yAxis.scale(yScale)
+        gYaxis.call(yAxis)
+            .attr('transform', `translate(${padding.left}, 0)`)
+    }
+    function myadd() {
+        dataset.push([Math.random().toFixed(2), Math.random().toFixed(2)])
+        draw()
+    }
+    draw()
+</script>
+</html>

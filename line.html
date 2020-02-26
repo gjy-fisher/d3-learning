@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>折线图</title>
+    <script src="https://cdn.bootcss.com/d3/5.15.0/d3.min.js"></script>
+</head>
+<body>
+    <div class="line-container"></div>
+</body>
+<script>
+    const dataset = [
+        {
+            country: 'china',
+            gdp: [
+                [2000, 11920], [2001, 13170], [2002, 14550], [2003, 16500], [2004, 19440], [2005, 22870], [2006, 27930], 
+                [2007, 35040], [2008, 45470], [2009, 51050], [2010, 59490], [2011, 73140], [2012, 83860], [2013, 103550]
+            ]
+        },
+        {
+            country: 'japan',
+            gdp: [
+                [2000, 47310], [2001, 41590], [2002, 39800], [2003, 43020], [2004, 46550], [2005, 45710], [2006, 43560], 
+                [2007, 43560], [2008, 48490], [2009, 50350], [2010, 54950], [2011, 59050], [2012, 59370], [2013, 48980]
+            ]
+        }
+    ]
+    const width = 400
+    const height = 400
+    const padding = { top: 50, right: 50, bottom: 50, left: 50 }
+
+    let gdpmax = 0
+    dataset.forEach(item => {
+        const currGdp = d3.max(item.gdp, (d) => d[1]) 
+        if (currGdp > gdpmax) {
+            gdpmax = currGdp
+        }
+    })
+
+    let xScale = d3.scaleLinear().domain([2000, 2013]).range([0, width-padding.left-padding.right])
+    let yScale = d3.scaleLinear().domain([0, gdpmax * 1.1]).range([height-padding.top-padding.bottom, 0])
+
+    const linePath = d3.line().x((d) => xScale(d[0])).y(d => yScale(d[1])).curve(d3.curveBasis)
+
+    const colors = d3.schemeCategory10
+
+    const svg = d3.select('.line-container')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height)
+ 
+    function initScale() {
+        dataset.forEach(item => {
+            const currGdp = d3.max(item.gdp, (d) => d[1]) 
+            if (currGdp > gdpmax) {
+                gdpmax = currGdp
+            }
+        })
+        yScale = d3.scaleLinear().domain([0, gdpmax * 1.1]).range([height-padding.top-padding.bottom, 0])
+    }
+    function initLine(svgDom) {
+        if (svgDom) {
+            svgDom
+                .attr('fill', 'none')
+                .attr('class', 'path')
+                .attr('transform', `translate(${padding.left}, ${padding.top})`)
+                .attr('d', d => linePath(d.gdp))
+                .attr('stroke-width', 3)
+                .attr('stroke', (d, i) => colors[i])
+        }
+    }
+    function draw() {
+        initScale()
+        const updateLine = svg.selectAll('.path')
+            .data(dataset)
+        const enterLine = updateLine.enter()
+        const exitLine = updateLine.exit()
+
+        initLine(updateLine)
+        
+        initLine(enterLine.append('path'))
+
+        exitLine.remove()
+
+        drowAxis()
+        svg.selectAll('.rect')
+            .data(dataset)
+            .enter()
+            .append('rect')
+            .attr('transform', (d, i) => `translate(${padding.left + i * 80}, ${height-padding.bottom + 30})`)
+            .attr('width', 10)
+            .attr('height', 10)
+            .attr('fill', (d,i) => colors[i])
+            .attr('class', 'rect')
+
+        svg.selectAll('.text')
+            .data(dataset)
+            .enter()
+            .append('text')
+            .attr('transform', (d, i) => `translate(${padding.left + i * 80 + 15}, ${height-padding.bottom + 39})`)
+            .attr('fill', '#000')
+            .attr('font-size', '14px')
+            .attr('class', 'text')
+            .text(d => d.country)
+    }
+    let xAxis
+    let gXaxis = svg.append('g')
+    let yAxis
+    let gYaxis = svg.append('g')
+    function drowAxis() {
+        gXaxis.remove()
+        xAxis = d3.axisBottom()
+        gXaxis = svg.append('g')
+        xAxis = xAxis.scale(xScale)
+            .ticks(5)
+            .tickFormat(d3.format('d'))
+
+        gXaxis.call(xAxis)
+            .attr('transform', `translate(${padding.left}, ${height - padding.bottom})`)
+
+        gYaxis.remove()
+        yAxis = d3.axisLeft()
+        gYaxis = svg.append('g')
+        yAxis.scale(yScale)
+        gYaxis.call(yAxis)
+            .attr('transform', `translate(${padding.left}, ${padding.top})`)
+    }
+    draw()
+</script>
+</html>
