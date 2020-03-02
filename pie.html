@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>饼状图</title>
+    <script src="https://cdn.bootcss.com/d3/5.15.0/d3.min.js"></script>
+</head>
+<body>
+    <div class="pie-container"></div>
+    <button onclick="mysort()">排序</button>
+    <button onclick="myadd()">新增</button>
+</body>
+<script>
+    const dataset = [['小米', 60.8], ['三星', 58.4], ['联想', 43.7], ['苹果', 46.6], ['华为', 41.3], ['酷派', 40.1], ['其他', 111.5]]
+
+    const pie = d3.pie().value((d) => d[1])
+        // .startAngle(Math.PI * 0.2).endAngle(Math.PI * 1.5)
+    const pieData = pie(dataset)
+
+    console.log(pieData)
+
+    const width = 400
+    const height = 400
+    const outerRadius = width / 3
+    const innerRadius = 0
+    const arc = d3.arc().innerRadius(innerRadius).outerRadius(outerRadius)
+    const colors = d3.schemeCategory10
+
+    const svg = d3.select('.pie-container')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height)
+    const padding = { top: 20, right: 20, bottom: 20, left: 30 }
+
+    function initPie(svgDom) {
+        if (svgDom) {
+            svgDom
+                .attr('transform', `translate(${width/2}, ${height/2})`)
+                .attr('class', 'pie')
+                .append('path')
+                .attr('fill', (d, i) => colors[i])
+                .transition()
+                .attr('d', (d) => arc(d))
+               
+        }
+    }
+    function initText(svgDom) {
+        if (svgDom) {
+            svgDom
+                .attr('transform', (d, i) => {
+                    return `translate(${width/2}, ${height/2}) translate(${arc.centroid(d)[0] * 1.4}, ${arc.centroid(d)[1] * 1.4})` 
+                })
+                .attr('fill', '#000')
+                .attr('font-size', '14px')
+                .attr('text-anchor', 'middle')
+                .text(d => {
+                    const percent = Number(d.value) * 100 / d3.sum(dataset, d => d[1])
+                    return percent.toFixed(2) + '%'
+                })
+                .attr('class', 'text')
+        }
+    }
+    function initLine(svgDom) {
+        if (svgDom) {
+            svgDom
+                .attr('stroke', 'black')
+                .attr('x1', d => arc.centroid(d)[0] * 2)
+                .attr('y1', d => arc.centroid(d)[1] * 2)
+                .attr('x2', d => arc.centroid(d)[0] * 2.2)
+                .attr('y2', d => arc.centroid(d)[1] * 2.2)
+                .attr('transform', (d, i) => {
+                    return `translate(${width/2}, ${height/2})` 
+                })
+                .append('text')
+                .attr('fill', '#000')
+                .attr('font-size', '14px')
+                .attr('text-anchor', 'middle')
+                .text(d => d[0])
+        }
+    }
+    function initDescText(svgDom) {
+        if (svgDom) {
+            svgDom
+                .attr('transform', (d, i) => {
+                    return `translate(${width/2}, ${height/2}) translate(${arc.centroid(d)[0] * 2.5}, ${arc.centroid(d)[1] * 2.5})` 
+                })
+                .attr('fill', '#000')
+                .attr('font-size', '14px')
+                .attr('text-anchor', 'middle')
+                .text(d => {
+                    return d.data[0]
+                })
+                .attr('class', 'desc-text')
+        }
+    }
+    function initDateToSvg (className, data, svgTagName, svgDrawCb = _ => null) {
+        const update = svg.selectAll(className)
+            .data(data)
+        const enter = update.enter()
+        const exit = update.exit()
+
+        svgDrawCb(update)
+        svgDrawCb(enter.append(svgTagName))
+        exit.remove()
+    }
+    function draw() {
+        initDateToSvg('.pie', pieData, 'g', initPie)
+        initDateToSvg('.text', pieData, 'text', initText)
+        initDateToSvg('.line', pieData, 'line', initLine)
+        initDateToSvg('.desc-text', pieData, 'text', initDescText)
+    }
+ 
+    function mysort() {
+        dataset.sort(d3.ascending)
+        draw()
+    }
+    function myadd() {
+        dataset.push(Math.floor(Math.random() * 100))
+        draw()
+    }
+    draw()
+</script>
+</html>

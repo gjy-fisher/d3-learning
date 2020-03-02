@@ -33,12 +33,18 @@
                 .attr('x', (d, i) => {
                     return padding.left + xScale(i)
                 })
-                .attr('y', (d) => {
-                    return height - padding.bottom - yScale(d)
-                })
                 .attr('width', xScale.bandwidth())
+                .attr('y', (d) => {
+                    return height - padding.bottom
+                })
+                .attr('height', _ => 0)
+                .transition()
+                .duration(800)
                 .attr('height', (d) => {
                     return yScale(d)
+                })
+                .attr('y', (d) => {
+                    return height - padding.bottom - yScale(d)
                 })
                 .attr('class', 'rect')
         }
@@ -49,9 +55,12 @@
                 .attr('font-size', '14px')
                 .attr('text-anchor', 'middle')
                 .attr('x', (d, i) => padding.left + xScale(i))
-                .attr('y', (d) => height - padding.bottom - yScale(d))
                 .attr('dx', xScale.bandwidth()/2)
                 .attr('dy', '1em')
+                .attr('y', (d) => height - padding.bottom)
+                .transition()
+                .duration(800)
+                .attr('y', (d) => height - padding.bottom - yScale(d))
                 .text(d => d)
                 .attr('class', 'text')
         }
