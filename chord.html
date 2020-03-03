@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>弦图</title>
+    <script src="https://cdn.bootcss.com/d3/5.15.0/d3.min.js"></script>
+</head>
+<body>
+    <div class="chrod-container"></div>
+</body>
+<script>
+    const width = 400
+    const height = 400
+    const padding = { top: 20, right: 20, bottom: 20, left: 30 }
+    let continent = ['亚洲', '欧洲', '非洲', '美洲', '大洋洲']
+    let population = [
+        [9000, 890, 3000, 1000, 5200],
+        [3400, 8000, 2300, 4922, 374],
+        [2000, 2000, 7700, 4881, 1050],
+        [3000, 8012, 5531, 500, 400],
+        [3540, 4310, 1500, 900, 1900, 300]
+    ]
+
+    const chord = d3.chord()
+        .padAngle(0.03)
+        .sortSubgroups(d3.ascending)
+        // .matrix(population)
+
+    const dataset = chord(population)
+    console.log(dataset)
+
+    const colors = d3.schemeCategory10
+
+
+    const svg = d3.select('.chrod-container')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height)
+    
+    const gChord = svg.append('g')
+        .attr('transform', `translate(${width/2}, ${height/2})`)
+
+    const gOuter = gChord.append('g')
+    const gInner = gChord.append('g')
+
+    const innerRadius = width/2 * 0.7
+    const outerRadius = innerRadius * 1.1
+
+    const arc = d3.arc()
+        .innerRadius(innerRadius)
+        .outerRadius(outerRadius)
+
+    
+
+    function initArc(svgDom) {
+        if (svgDom) {
+            return svgDom
+                .attr('class', 'arc')
+                .attr('r', 20)
+                .style('fill', (d, i) => colors[d.index])
+                .attr('d', arc)
+        }
+    }
+    function dragStarted (d) {
+        if (!d3.event.active) force.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+    }
+    function dragged (d) {
+        d.fx = d3.event.x;
+        d.fy = d3.event.y;
+        d3.select(this).style('fill', 'yellow')
+    }
+    function dragended (d) {
+        d3.select(this).style('fill', (d, i) => {
+            return colors[d.index]
+        })
+        if (!d3.event.active) force.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+    }
+    function initText(svgDom) {
+        if (svgDom) {
+            return svgDom
+                .each((d, i) => {
+                    d.angle = (d.startAngle + d.endAngle) / 2
+                    d.name = continent[i]
+                })
+                .attr('class', 'outerText')
+                .attr('dy', '.35em')
+                .text(d => d.name)
+                .attr('transform', (d, i) => {
+                    let result = `rotate(${d.angle * 180 / Math.PI})`
+                    result += `translate(0, ${-1.0 * (outerRadius + 10)})`
+                    return result
+                })
+                .attr('font-size', '14px')
+                .attr('text-anchor', 'middle')
+        }
+    }
+    function initLine(svgDom) {
+        if (svgDom) {
+            return svgDom
+                .attr('class', 'forceLine')
+                .attr('stroke', 'black')
+        }
+    }
+    function initDateToSvg (className, data, svgTagName, svgDrawCb = _ => null, container = svg) {
+        const update = container.selectAll(className)
+            .data(data)
+        const enter = update.enter()
+        const exit = update.exit()
+
+        svgDrawCb(update)
+        const drawSvg = svgDrawCb(enter.append(svgTagName))
+        exit.remove()
+        return drawSvg
+    }
+    function draw() {
+        initDateToSvg('.arc', dataset.groups, 'path', initArc, gOuter)
+        // initDateToSvg('.forceCircle', nodes, 'circle', initCircle)
+        initDateToSvg('.outerText', dataset.groups, 'text', initText, gOuter)
+    }
+ 
+
+    draw()
+</script>
+</html>

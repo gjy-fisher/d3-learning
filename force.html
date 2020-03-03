@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>力导向图</title>
+    <script src="https://cdn.bootcss.com/d3/5.15.0/d3.min.js"></script>
+</head>
+<body>
+    <div class="pie-container"></div>
+</body>
+<script>
+    const width = 400
+    const height = 400
+    let nodes = [{ name: 0 }, { name: 1 }, { name: 2 }, { name: 3 }, { name: 4 }, { name: 5 }, { name: 6 }]
+    let edges = [{ source: 0, target: 1 }, { source: 0, target: 2 }, { source: 0, target: 3 },
+                    { source: 1, target: 4 }, { source: 1, target: 5 }, { source: 1, target: 6 }]
+
+    const force = d3.forceSimulation().nodes(nodes)
+        .force('links', d3.forceLink(edges).distance(150))
+        .force('charge', d3.forceManyBody().strength(-400))
+        .force("y", d3.forceY(height / 2))
+        .force("x", d3.forceX(width / 2))
+
+    force.restart()
+
+    console.log(nodes)
+    console.log(edges)
+
+    const colors = d3.schemeCategory10
+
+
+
+    const svg = d3.select('.pie-container')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height)
+    const padding = { top: 20, right: 20, bottom: 20, left: 30 }
+
+    function initCircle(svgDom) {
+        if (svgDom) {
+            return svgDom
+                .attr('class', 'forceCircle')
+                .attr('r', 20)
+                .style('fill', (d, i) => colors[d.index])
+                .call(d3.drag()
+                    .on('start', dragStarted)
+                    .on('drag', dragged)
+                    .on('end', dragended)
+                )
+        }
+    }
+    function dragStarted (d) {
+        if (!d3.event.active) force.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+    }
+    function dragged (d) {
+        d.fx = d3.event.x;
+        d.fy = d3.event.y;
+        d3.select(this).style('fill', 'yellow')
+    }
+    function dragended (d) {
+        d3.select(this).style('fill', (d, i) => {
+            return colors[d.index]
+        })
+        if (!d3.event.active) force.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+    }
+    function initText(svgDom) {
+        if (svgDom) {
+            return svgDom
+                .attr('fill', '#000')
+                .attr('font-size', '14px')
+                .attr('text-anchor', 'middle')
+                .text(d => {
+                    return d.name
+                })
+                .attr('x', d => d.x)
+                .attr('y', d => d.y)
+                .attr('dy', '.3em')
+                .attr('class', 'text')
+        }
+    }
+    function initLine(svgDom) {
+        if (svgDom) {
+            return svgDom
+                .attr('class', 'forceLine')
+                .attr('stroke', 'black')
+        }
+    }
+    function initDateToSvg (className, data, svgTagName, svgDrawCb = _ => null) {
+        const update = svg.selectAll(className)
+            .data(data)
+        const enter = update.enter()
+        const exit = update.exit()
+
+        svgDrawCb(update)
+        const drawSvg = svgDrawCb(enter.append(svgTagName))
+        exit.remove()
+        return drawSvg
+    }
+    function draw() {
+        const lines = initDateToSvg('.forceLine', edges, 'line', initLine)
+        const circles = initDateToSvg('.forceCircle', nodes, 'circle', initCircle)
+        const texts = initDateToSvg('.text', nodes, 'text', initText)
+        // 动画衰减时监听的事件
+        force.on('tick', () => {
+            lines.attr('x1', d => d.source.x)
+            lines.attr('y1', d => d.source.y)
+            lines.attr('x2', d => d.target.x)
+            lines.attr('y2', d => d.target.y)
+            
+            circles.attr('cx', (d) => d.x)
+            circles.attr('cy', (d) => d.y)
+
+            texts.attr('x', (d) => d.x)
+            texts.attr('y', (d) => d.y)
+        })
+
+        force.on('end', () => {
+            console.log('end')
+        })
+    }
+ 
+
+    draw()
+</script>
+</html>

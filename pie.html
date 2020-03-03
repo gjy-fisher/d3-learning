@@ -8,8 +8,6 @@
 </head>
 <body>
     <div class="pie-container"></div>
-    <button onclick="mysort()">排序</button>
-    <button onclick="myadd()">新增</button>
 </body>
 <script>
     const dataset = [['小米', 60.8], ['三星', 58.4], ['联想', 43.7], ['苹果', 46.6], ['华为', 41.3], ['酷派', 40.1], ['其他', 111.5]]
@@ -111,14 +109,7 @@
         initDateToSvg('.desc-text', pieData, 'text', initDescText)
     }
  
-    function mysort() {
-        dataset.sort(d3.ascending)
-        draw()
-    }
-    function myadd() {
-        dataset.push(Math.floor(Math.random() * 100))
-        draw()
-    }
+
     draw()
 </script>
 </html>
