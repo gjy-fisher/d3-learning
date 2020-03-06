@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>直方图</title>
+    <script src="https://cdn.bootcss.com/d3/5.15.0/d3.js"></script>
+</head>
+<body>
+    <div class="histogram-container"></div>
+</div>
+<script>
+    
+    const width = 400
+    const height = 400
+    const padding = { top: 20, right: 20, bottom: 20, left: 30 }
+
+    const colors = d3.schemeCategory10
+
+    const rand = d3.randomNormal(170, 10)
+
+    const dataset = []
+
+    for (let i = 0; i < 170; i++) {
+        dataset.push(rand())
+    }
+
+    console.log(dataset)
+
+    const histogram = d3.histogram
+
+    const binNum = 20
+    const minRange = 130
+    const maxRange = 210
+
+    const xScale = d3.scaleBand()
+        .domain(d3.ticks(130, 210, 20))
+        .rangeRound([0, width - padding.left - padding.right])
+        .padding(0.1).paddingOuter(0.1)
+
+    const bins = d3.histogram().domain([130, 210]).thresholds(d3.ticks(130, 210, 20))(dataset);
+
+    console.log(bins)
+
+    const yScale = d3.scaleLinear()
+        .domain([d3.min(bins, d => d.length), d3.max(bins, d => d.length)])
+        .range([0, height - padding.bottom - padding.top])
+
+
+    const svg = d3.select('.histogram-container')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height)
+    
+    const xAxis = d3.axisBottom().scale(xScale).ticks(20)
+
+    svg
+        .append('g')
+        .attr('class', 'xaxis')
+        .call(xAxis)
+        .attr('transform', `translate(${padding.left}, ${height - padding.top})`)
+
+    function initRect(svgDom) {
+        if (svgDom) {
+            return svgDom
+                .attr('class', 'rect')
+                .attr('fill', 'steelblue')
+                .attr('transform', `translate(${padding.left}, ${-padding.bottom})`)
+                .attr('x', d => xScale(d.x0))
+                .attr('width', d => xScale.bandwidth())
+                .attr('y', d => height)
+                .transition()
+                .duration(300)
+                .delay((d, i) => 60 * i)
+                .attr('y', d => height - yScale(d.length))
+                .attr('height', d => yScale(d.length))
+        }
+    }
+
+
+    function initText(svgDom) {
+        if (svgDom) {
+            return svgDom
+                .attr('fill', '#000')
+                .attr('font-size', '14px')
+                .attr('text-anchor', 'middle')
+                .text(d => {
+                    return d.name
+                })
+                .attr('x', d => d.x)
+                .attr('y', d => d.y)
+                .attr('dy', '.3em')
+                .attr('class', 'text')
+        }
+    }
+    function initLine(svgDom) {
+        if (svgDom) {
+            return svgDom
+                .attr('class', 'forceLine')
+                .attr('stroke', 'black')
+        }
+    }
+    function initDateToSvg (className, data, svgTagName, svgDrawCb = _ => null) {
+        const update = svg.selectAll(className)
+            .data(data)
+        const enter = update.enter()
+        const exit = update.exit()
+
+        svgDrawCb(update)
+        const drawSvg = svgDrawCb(enter.append(svgTagName))
+        exit.remove()
+        return drawSvg
+    }
+    function draw() {
+        initDateToSvg('.rect', bins, 'rect', initRect)
+        // const circles = initDateToSvg('.forceCircle', nodes, 'circle', initCircle)
+        // const texts = initDateToSvg('.text', nodes, 'text', initText)
+    }
+ 
+
+    draw()
+</script>
+</html>

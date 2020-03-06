@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打包图</title>
+    <script src="https://cdn.bootcss.com/d3/5.15.0/d3.min.js"></script>
+</head>
+
+<body>
+    <div class="pack-container"></div>
+</body>
+<script>
+    const width = 400
+    const height = 400
+    const padding = { top: 20, right: 20, bottom: 20, left: 30 }
+    let dataset = {
+        name: '中国',
+        children: [
+            {
+                name: '浙江',
+                children: [
+                    { name: '杭州' },
+                    { name: '宁波' },
+                    { name: '温州' },
+                    { name: '绍兴' }
+                ]
+            }, {
+                name: '广西',
+                children: [
+                    {
+                        name: '桂林',
+                        children: [
+                            { name: '秀峰区' },
+                            { name: '叠彩区' },
+                            { name: '象山区' },
+                            { name: '七星区' }
+                        ]
+                    },
+                    { name: '南宁' },
+                    { name: '柳州' },
+                    { name: '防港城' }
+                ]
+            }
+        ]
+    }
+
+    const pack = d3.pack()
+        .size([width, height])
+        .padding(5)
+        .radius(d => 18)
+
+    const colors = d3.schemeCategory10
+
+    const packRoot = d3.hierarchy(dataset)
+    pack(packRoot)
+
+    const nodes = packRoot.descendants()
+    const links = packRoot.links()
+
+    console.log(nodes)
+    console.log(links)
+
+    const svg = d3.select('.pack-container')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height)
+
+    const gPack = svg.append('g').attr('transform', `translate(0, ${20})`)
+
+    function initText(svgDom) {
+        if (svgDom) {
+            return svgDom
+                .attr('class', 'text')
+                .attr('font-size', '12px')
+                .attr('fill', '#fff')
+                .attr('text-anchor', 'middle')
+                .style('fill-opacity', d => d.children ? 0 : 1)
+                .attr('x', (d) => d.x)
+                .attr('y', (d) => d.y)
+                .text(d => d.data.name)
+                .attr('dy', '.3em')
+        }
+    }
+
+    function initCircle(svgDom) {
+        if (svgDom) {
+            const _nodes = svgDom
+                .attr('class', d => d.children ? 'node' : 'leafnode')
+                .attr('cx', d => d.x)
+                .attr('cy', d => d.y)
+                .attr('r', d => d.r)
+                .style('fill', (d, i) => colors[i])
+        }
+    }
+    function initDateToSvg(className, data, svgTagName, svgDrawCb = _ => null, container = svg) {
+        const update = container.selectAll(className)
+            .data(data)
+        const enter = update.enter()
+        const exit = update.exit()
+
+        svgDrawCb(update)
+        const drawSvg = svgDrawCb(enter.append(svgTagName))
+        exit.remove()
+        return drawSvg
+    }
+
+    function draw() {
+        initDateToSvg('circle', nodes, 'circle', initCircle, gPack)
+        initDateToSvg('.text', nodes, 'text', initText, gPack)
+    }
+
+
+    draw()
+</script>
+
+</html>

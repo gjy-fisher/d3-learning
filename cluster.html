@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>集群图</title>
+    <script src="https://cdn.bootcss.com/d3/5.15.0/d3.min.js"></script>
+</head>
+
+<body>
+    <div class="cluster-container"></div>
+</body>
+<script>
+    const width = 400
+    const height = 400
+    const padding = { top: 20, right: 20, bottom: 20, left: 30 }
+    let dataset = {
+        name: '中国',
+        children: [
+            {
+                name: '浙江',
+                children: [
+                    { name: '杭州' },
+                    { name: '宁波' },
+                    { name: '温州' },
+                    { name: '绍兴' }
+                ]
+            }, {
+                name: '广西',
+                children: [
+                    {
+                        name: '桂林',
+                        children: [
+                            { name: '秀峰区' },
+                            { name: '叠彩区' },
+                            { name: '象山区' },
+                            { name: '七星区' }
+                        ]
+                    },
+                    { name: '南宁' },
+                    { name: '柳州' },
+                    { name: '防港城' }
+                ]
+            }
+        ]
+    }
+
+    const cluster = d3.cluster()
+        .size([360, width / 2 - 50])
+        .separation((a,b) => (a.parent === b.parent ? 1 : 2) / a.depth)
+
+    const treeRoot = d3.hierarchy(dataset)
+    cluster(treeRoot)
+
+    const nodes = treeRoot.descendants()
+    const links = cluster(treeRoot).links()
+
+    console.log(nodes)
+    console.log(links)
+
+    const linkRadial = d3.linkRadial()
+        .angle(d => {
+            return angle = d.x / 180 * Math.PI
+        }).radius(d => d.y)
+
+
+    const svg = d3.select('.cluster-container')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height)
+
+    const gTree = svg.append('g').attr('transform', `translate(${width/2}, ${height/2})`)
+
+    function initLink(svgDom) {
+        if (svgDom) {
+            return svgDom
+                .attr('class', 'link')
+                .attr('stroke', '#666')
+                .attr('fill', 'none')
+                .attr('d', linkRadial)
+        }
+    }
+
+    function initNodes(svgDom) {
+        if (svgDom) {
+            const _nodes = svgDom
+                .attr('class', 'node')
+                .attr('transform', d => `rotate(${d.x -90}) translate(${d.y})`)
+            
+             _nodes.append('circle')
+                .attr('r', 4.5)
+            
+            _nodes.append('text')
+                .attr('transform', (d) => d.x < 180 ? 'translate(8)' : 'rotate(180)translate(-8)')
+                .attr('dy', '.3em')
+                .text(d => d.data.name)
+                .attr('font-size', '12px')
+                .attr('text-anchor', d => d.x < 180 ? 'start' : 'end')
+        }
+    }
+    function initDateToSvg(className, data, svgTagName, svgDrawCb = _ => null, container = svg) {
+        const update = container.selectAll(className)
+            .data(data)
+        const enter = update.enter()
+        const exit = update.exit()
+
+        svgDrawCb(update)
+        const drawSvg = svgDrawCb(enter.append(svgTagName))
+        exit.remove()
+        return drawSvg
+    }
+
+    function draw() {
+        initDateToSvg('.link', links, 'path', initLink, gTree)
+        initDateToSvg('.node', nodes, 'g', initNodes, gTree)
+    }
+
+
+    draw()
+</script>
+
+</html>

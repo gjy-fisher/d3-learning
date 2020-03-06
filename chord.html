@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>弦图</title>
     <script src="https://cdn.bootcss.com/d3/5.15.0/d3.min.js"></script>
+    <style>
+        .arc {
+            cursor: pointer;
+        }
+        .arc:hover {
+            transform: scale(1.03);
+            transition: .3s;
+        }
+    </style>
 </head>
 <body>
     <div class="chrod-container"></div>
@@ -22,12 +31,12 @@
         [3540, 4310, 1500, 900, 1900, 300]
     ]
 
-    const chord = d3.chord()
+    const chordDataset = d3.chord()
         .padAngle(0.03)
         .sortSubgroups(d3.ascending)
         // .matrix(population)
 
-    const dataset = chord(population)
+    const dataset = chordDataset(population)
     console.log(dataset)
 
     const colors = d3.schemeCategory10
@@ -43,6 +52,8 @@
 
     const gOuter = gChord.append('g')
     const gInner = gChord.append('g')
+    const gLegend = svg.append('g')
+        .attr('transform', `translate(0, ${height - padding.bottom})`)
 
     const innerRadius = width/2 * 0.7
     const outerRadius = innerRadius * 1.1
@@ -51,7 +62,7 @@
         .innerRadius(innerRadius)
         .outerRadius(outerRadius)
 
-    
+    const innerChord = d3.ribbon().radius(innerRadius)
 
     function initArc(svgDom) {
         if (svgDom) {
@@ -62,24 +73,7 @@
                 .attr('d', arc)
         }
     }
-    function dragStarted (d) {
-        if (!d3.event.active) force.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-    }
-    function dragged (d) {
-        d.fx = d3.event.x;
-        d.fy = d3.event.y;
-        d3.select(this).style('fill', 'yellow')
-    }
-    function dragended (d) {
-        d3.select(this).style('fill', (d, i) => {
-            return colors[d.index]
-        })
-        if (!d3.event.active) force.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
-    }
+
     function initText(svgDom) {
         if (svgDom) {
             return svgDom
@@ -99,12 +93,32 @@
                 .attr('text-anchor', 'middle')
         }
     }
-    function initLine(svgDom) {
+    function initChord(svgDom) {
         if (svgDom) {
             return svgDom
-                .attr('class', 'forceLine')
-                .attr('stroke', 'black')
+                .attr('class', 'innerChord')
+                .style('fill', (d, i) => colors[d.source.index])
+                .attr('d', innerChord)
         }
+    }
+    function initLegend(svgDom) {
+        if (svgDom) {
+            return svgDom
+                .attr('class', 'legend')
+                .style('fill', (d, i) => colors[i])
+                .attr('width', 20)
+                .attr('height', 20)
+                .attr('transform', (d, i) => `translate(${padding.left + i * 70}, 0)`)
+        }
+    }
+    function initLegendText(svgDom) {
+        svgDom.enter()
+            .append('text')
+                .attr('class', 'legendText')
+                .attr('font-size', '14px')
+                .attr('text-anchor', 'right')
+                .text(d => d.name)
+                .attr('transform', (d, i) => `translate(${padding.left + 25 + i * 70}, 18)`)
     }
     function initDateToSvg (className, data, svgTagName, svgDrawCb = _ => null, container = svg) {
         const update = container.selectAll(className)
@@ -117,10 +131,22 @@
         exit.remove()
         return drawSvg
     }
+    function fade(opacity) {
+        return function (g, i) {
+            gInner.selectAll('.innerChord').filter(d => {
+                console.log(d, i)
+                return d.source.index !== i && d.target.index !== i
+            }).transition().style('opacity', opacity)
+        }
+    }
     function draw() {
         initDateToSvg('.arc', dataset.groups, 'path', initArc, gOuter)
-        // initDateToSvg('.forceCircle', nodes, 'circle', initCircle)
+        initDateToSvg('.innerChord', dataset, 'path', initChord, gInner)
         initDateToSvg('.outerText', dataset.groups, 'text', initText, gOuter)
+        initDateToSvg('.legend', dataset.groups, 'rect', initLegend, gLegend)
+        initDateToSvg('.legendText', dataset.groups, 'text', initLegendText, gLegend)
+        gOuter.selectAll('.arc').on('mouseover', fade(0.0))
+        .on('mouseout', fade(1.0))
     }
  
 
